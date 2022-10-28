@@ -1,6 +1,8 @@
 extern crate rocket;
 
 use rocket::{get, post};
+use rocket::form::Form;
+use super::dto::UserLogin;
 
 #[get("/")]
 pub fn index() -> &'static str {
@@ -14,5 +16,7 @@ pub fn print_world() -> &'static str {
     "world"
 }
 
-// #[post("/")]
-// pub fn login() -> &'static str {}
+// #[post("/login", data = "<login>")]
+// pub fn login(login: Form<UserLogin>) -> String {
+//     format!("Hello, {}", login.name)
+// }

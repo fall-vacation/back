@@ -1,19 +1,23 @@
 #[macro_use] extern crate rocket;
 
-use fall_vacation_back::controller;
-use fall_vacation_back::config;
-use fall_vacation_back::repository;
+use fall_vacation_back::member;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error>{
     println!("fall_vacation_back running...!");
 
     let _rocket = rocket::build()
-        .mount("/", routes![controller::index])
-        .mount("/hello", routes![controller::print_world])
+        .mount("/", routes![health_check])
+        .attach(member::stage())
         .launch()
         .await?;
     Ok(())
+}
+
+#[get("/")]
+pub fn health_check() -> &'static str {
+    println!("check health...");
+    "= alive ="
 }
 
 // fn main() {

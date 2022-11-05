@@ -9,9 +9,11 @@ edition = "2021"
 #codegen-units = 1
 
 [dependencies]
-rocket = "0.5.0-rc.2"
+rocket = { version = "0.5.0-rc.2", feature = ["json"] }
+#rocket_json = "0.1.4"
 chrono = "0.4.22"
 postgres = "0.19.4"
 toml = "0.5.9"
 serde = "1.0.145"
 serde_derive = "1.0.145"
+serde_json = "1.0.85"

@@ -1,7 +1,9 @@
 use serde_derive::Deserialize;
 use std::fs::File;
 use std::io::prelude::*;
-use postgres::types::IsNull::No;
+
+mod db_config;
+use db_config::PostgresConfig;
 
 pub struct ConfigLoader {
     loaded: bool,
@@ -11,15 +13,6 @@ pub struct ConfigLoader {
 #[derive(Deserialize)]
 struct Config {
     postgres_config: PostgresConfig,
-}
-
-#[derive(Deserialize)]
-struct PostgresConfig {
-    host: String,
-    user: String,
-    port: Option<u16>,
-    password: String,
-    dbname: String,
 }
 
 impl ConfigLoader {
@@ -67,13 +60,6 @@ impl ConfigLoader {
         }
 
         let postgres_config= self.config.unwrap().postgres_config;
-
-        Ok(format!("host={} user={} password={} dbname={} port={}",
-                   postgres_config.host,
-                   postgres_config.user,
-                   postgres_config.password,
-                   postgres_config.dbname,
-                   postgres_config.port.unwrap(),
-        ))
+        Ok(postgres_config.get_db_conn_str())
     }
 }

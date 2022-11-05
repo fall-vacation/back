@@ -1,0 +1,2 @@
+[default.databases.postgres_fv]
+url = "postgres://postgres:1234@localhost/study"

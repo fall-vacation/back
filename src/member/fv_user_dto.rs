@@ -1,7 +1,9 @@
-use serde::{Serialize, Deserialize};
-use rocket::form::{FromForm};
+use rocket::serde::{Serialize, Deserialize};
+// use rocket::form::{FromForm};
 
-#[derive(FromForm, Serialize, Deserialize, Debug)]
+// #[derive(FromForm, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
 pub struct FvUserDto {
     user_id: i32,
     email_address : String,

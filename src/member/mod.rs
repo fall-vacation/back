@@ -2,7 +2,7 @@ extern crate rocket;
 
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
-use rocket::form::Form;
+use rocket::serde::json::Json;
 
 pub mod fv_user_dto;
 use fv_user_dto::FvUserDto;
@@ -17,7 +17,7 @@ pub fn stage() -> AdHoc {
 }
 
 #[post("/login", format = "json", data = "<login>")]
-pub fn login(login: Form<FvUserDto>) -> String {
+pub fn login(login: Json<FvUserDto>) -> String {
     let user = login.into_inner();
     format!("Hello, {:?}", user)
 }

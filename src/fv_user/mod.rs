@@ -13,7 +13,7 @@ pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Member Stage", |rocket| async {
         rocket
             // .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
-            .mount("/member",
+            .mount("/fv_user",
                    routes![
                        login,
                        member_list,
@@ -30,7 +30,7 @@ pub fn login(login: Json<FvUserDto>) -> String {
 
 #[get("/list")]
 pub fn member_list() -> String {
-    let member_list = String::from("member list call");
+    let member_list = String::from("fv_user list call");
 
     return member_list
 }

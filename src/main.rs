@@ -2,7 +2,7 @@
 use rocket_db_pools::Database;
 
 use fall_vacation_back::repository::FvDb;
-use fall_vacation_back::member;
+use fall_vacation_back::fv_user;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error>{
@@ -11,7 +11,7 @@ async fn main() -> Result<(), rocket::Error>{
     let _rocket = rocket::build()
         .attach(FvDb::init())
         .mount("/", routes![health_check])
-        .attach(member::stage())
+        .attach(fv_user::stage())
         .launch()
         .await?;
     Ok(())

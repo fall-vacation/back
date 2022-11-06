@@ -3,44 +3,49 @@ extern crate rocket;
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
 use rocket::serde::json::Json;
-use rocket_db_pools::sqlx::Row;
+use rocket_db_pools::Connection;
 
 use crate::repository::FvDb;
-pub mod fv_user_dto;
-use fv_user_dto::FvUserDto;
+pub mod fv_user;
+use fv_user::Dao;
+use fv_user::Dto;
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Member Stage", |rocket| async {
         rocket
             // .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
-            .mount("/fv_user",
+            .mount("/user",
                    routes![
                        login,
-                       member_list,
+                       test,
                        get_member_by_id
                    ])
     })
 }
 
 #[post("/login", format = "json", data = "<login>")]
-pub fn login(login: Json<FvUserDto>) -> String {
+pub fn login(login: Json<Dto>) -> String {
     let user = login.into_inner();
+    let user = user.to_dao();
     format!("Hello, {:?}", user)
 }
 
-#[get("/list")]
-pub fn member_list() -> String {
-    let member_list = String::from("fv_user list call");
-
-    return member_list
-}
-
 #[get("/<id>")]
-pub async fn get_member_by_id(_db: &FvDb, id: i64) -> String {
+pub async fn get_member_by_id(_db: &FvDb, id: i32) -> String {
     // sqlx::query("SELECT content FROM logs WHERE id = ?").bind(id)
     //     .fetch_one(&db.0).await
     //     .and_then(|r| Ok(Log(r.try_get(0)?)))
     //     .ok();
 
     return format!("test {}", id)
+}
+
+#[get("/test/insert")]
+pub async fn test(mut db: Connection<FvDb>) -> String {
+    sqlx::query("INSERT INTO user_service(email_address, user_nickname, user_role, user_image, user_farm_id, access_token, access_expired, refresh_token, refresh_expired)\
+                 VALUES('email', 'nickname', 'admin', 'aaa.jpg', 0, 'access', '2022-10-10', 'refresh', '2022-11-11')")
+        .execute(&mut *db)
+        .await
+        .ok();
+    return String::from("user_service list call")
 }

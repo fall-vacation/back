@@ -1,4 +1,4 @@
 extern crate core;
 
-pub mod fv_user;
+pub mod user_service;
 pub mod repository;

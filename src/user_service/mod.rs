@@ -4,10 +4,10 @@ use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
 use rocket::serde::json::Json;
 use rocket_db_pools::Connection;
+use sqlx::Row;
 
 use crate::repository::FvDb;
 pub mod fv_user;
-use fv_user::Dao;
 use fv_user::Dto;
 
 pub fn stage() -> AdHoc {
@@ -24,10 +24,15 @@ pub fn stage() -> AdHoc {
 }
 
 #[post("/login", format = "json", data = "<login>")]
-pub fn login(login: Json<Dto>) -> String {
+pub async fn login(db: Connection<FvDb>, login: Json<Dto>) -> String {
     let user = login.into_inner();
     let user = user.to_dao();
-    format!("Hello, {:?}", user)
+    match user.insert(db).await{
+        Some(result) => {
+            format!("{} - {}", result.get::<i32, _>("user_id"), result.get::<String, _>("user_nickname"))
+        },
+        None => { String::from("return none") },
+    }
 }
 
 #[get("/<id>")]

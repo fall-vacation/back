@@ -1,5 +1,9 @@
 use chrono::{NaiveDateTime};
 use rocket::serde::{Serialize, Deserialize};
+use rocket_db_pools::Connection;
+// use rocket_db_pools::sqlx::postgres::PgQueryResult;
+use rocket_db_pools::sqlx::postgres::PgRow;
+use crate::repository::FvDb;
 
 #[derive(Debug)]
 pub struct Dao {
@@ -44,6 +48,38 @@ impl Dao {
             refresh_token: self.refresh_token.clone(),
             refresh_expired: self.refresh_expired.clone().to_string(),
         }
+    }
+
+    pub async fn insert(&self, mut db: Connection<FvDb>) -> Option<PgRow>{
+        let query = format!("INSERT INTO fv_user(\
+                    email_address, \
+                    user_nickname, \
+                    user_role, \
+                    user_image, \
+                    user_farm_id, \
+                    access_token, \
+                    access_expired, \
+                    refresh_token, \
+                    refresh_expired\
+                )\
+                VALUES('{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', '{}')\
+                RETURNING user_id, user_nickname",
+            self.email_address,
+            self.user_nickname,
+            self.user_role,
+            self.user_image,
+            self.user_farm_id,
+            self.access_token,
+            self.access_expired,
+            self.refresh_token,
+            self.refresh_expired
+        );
+
+        return sqlx::query(&query)
+            // .execute(&mut *db)
+            .fetch_one(&mut *db)
+            .await
+            .ok()
     }
 }
 

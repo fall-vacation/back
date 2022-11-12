@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: redheadset/fall-vacation-db:arm64_latest
+    ports:
+      - 5432:5432
+  rocket:
+    image: redheadset/fall-vacation-back:arm64_latest
+    ports:
+      - 8000:8000

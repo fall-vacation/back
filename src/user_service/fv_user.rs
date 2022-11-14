@@ -22,7 +22,7 @@ pub struct Dao {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Dto {
-    user_id: i32,
+    user_id: Option<i32>,
     email_address : String,
     user_nickname: String,
     user_role: String,
@@ -37,7 +37,7 @@ pub struct Dto {
 impl Dao {
     pub fn to_dto(&self) -> Dto {
         Dto {
-            user_id: self.user_id.clone(),
+            user_id: Option::from(self.user_id),
             email_address: self.email_address.clone(),
             user_nickname: self.user_nickname.clone(),
             user_role: self.user_role.clone(),
@@ -86,7 +86,7 @@ impl Dao {
 impl Dto {
     pub fn to_dao(&self) -> Dao {
         Dao{
-            user_id: self.user_id,
+            user_id: self.user_id.unwrap_or(0),
             email_address: self.email_address.clone(),
             user_nickname: self.user_nickname.clone(),
             user_role: self.user_role.clone(),

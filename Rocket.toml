@@ -1,0 +1,3 @@
+# 로컬 처리 시에만 사용
+[default.databases.postgres_fv]
+url = "postgres://fv_pgr:fallvacation@localhost:55432/fallvacation"

@@ -1,8 +1,10 @@
-use chrono::{NaiveDateTime};
+// use chrono::{NaiveDateTime};
+use sqlx::types::chrono::NaiveDateTime;
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::Connection;
 // use rocket_db_pools::sqlx::postgres::PgQueryResult;
 use rocket_db_pools::sqlx::postgres::PgRow;
+use sqlx::Row;
 use crate::repository::FvDb;
 
 #[derive(Debug)]
@@ -51,19 +53,20 @@ impl Dao {
     }
 
     pub async fn insert(&self, mut db: Connection<FvDb>) -> Option<PgRow>{
-        let query = format!("INSERT INTO fv_user(\
-                    email_address, \
-                    user_nickname, \
-                    user_role, \
-                    user_image, \
-                    user_farm_id, \
-                    access_token, \
-                    access_expired, \
-                    refresh_token, \
-                    refresh_expired\
-                )\
-                VALUES('{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', '{}')\
-                RETURNING user_id, user_nickname",
+        let query = format!("\
+            INSERT INTO fv_user(\
+                email_address, \
+                user_nickname, \
+                user_role, \
+                user_image, \
+                user_farm_id, \
+                access_token, \
+                access_expired, \
+                refresh_token, \
+                refresh_expired\
+            )\
+            VALUES('{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', '{}')\
+            RETURNING user_id, user_nickname",
             self.email_address,
             self.user_nickname,
             self.user_role,
@@ -80,6 +83,44 @@ impl Dao {
             .fetch_one(&mut *db)
             .await
             .ok()
+    }
+
+    pub async fn select(mut db: Connection<FvDb>, user_id: i32) -> Option<PgRow>{
+        let query = format!("\
+            SELECT \
+                user_id, \
+                email_address, \
+                user_nickname, \
+                user_role, \
+                user_image, \
+                user_farm_id, \
+                access_token, \
+                access_expired, \
+                refresh_token, \
+                refresh_expired \
+            FROM fv_user
+            WHERE user_id = {}", user_id
+        );
+
+        return sqlx::query(&query)
+            .fetch_one(&mut *db)
+            .await
+            .ok()
+    }
+
+    pub fn match_pg_row(row:PgRow) -> Dao {
+        return Dao{
+            user_id : row.get::<i32, _>("user_id"),
+            email_address : row.get::<String, _>("email_address"),
+            user_nickname : row.get::<String, _>("user_nickname"),
+            user_role : row.get::<String, _>("user_role"),
+            user_image : row.get::<String, _>("user_image"),
+            user_farm_id : row.get::<i32, _>("user_farm_id"),
+            access_token : row.get::<String, _>("access_token"),
+            access_expired : row.get::<NaiveDateTime, _>("access_expired"),
+            refresh_token : row.get::<String, _>("refresh_token"),
+            refresh_expired : row.get::<NaiveDateTime, _>("refresh_expired"),
+        }
     }
 }
 

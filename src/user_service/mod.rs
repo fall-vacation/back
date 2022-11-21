@@ -9,6 +9,7 @@ use sqlx::Row;
 use crate::repository::FvDb;
 pub mod fv_user;
 use fv_user::Dto;
+use crate::user_service::fv_user::Dao;
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Member Stage", |rocket| async {
@@ -36,13 +37,21 @@ pub async fn login(db: Connection<FvDb>, login: Json<Dto>) -> String {
 }
 
 #[get("/<id>")]
-pub async fn get_member_by_id(_db: &FvDb, id: i32) -> String {
+pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> String {
     // sqlx::query("SELECT content FROM logs WHERE id = ?").bind(id)
     //     .fetch_one(&db.0).await
     //     .and_then(|r| Ok(Log(r.try_get(0)?)))
     //     .ok();
 
-    return format!("test {}", id)
+    return match Dao::select(db, id).await{
+        Some(result) => {
+            let dto = Dao::match_pg_row(result).to_dto();
+            format!("{:?}", dto)
+        },
+        None => {
+            String::from("return none")
+        },
+    }
 }
 
 #[get("/test/insert")]

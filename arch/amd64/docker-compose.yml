@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  falldb:
+    image: "redheadset/fall-vacation-db:amd64_latest"
+    ports:
+      - "55432:5432"
+  fallback:
+    image: "redheadset/fall-vacation-back:amd64_latest"
+    restart:
+      on-failure
+    ports:
+      - "8000:8000"
+    environment:
+      ROCKET_DATABASES: '{postgres_fv={url="postgres://fv_pgr:fallvacation@falldb:5432/fallvacation"}}'
+    depends_on:
+      - "falldb"

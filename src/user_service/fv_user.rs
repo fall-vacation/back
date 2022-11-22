@@ -84,7 +84,7 @@ impl Dao {
             .ok()
     }
 
-    pub async fn select(mut db: Connection<FvDb>, user_id: i32) -> Option<PgRow>{
+    pub async fn select_from_id(mut db: Connection<FvDb>, user_id: i32) -> Option<PgRow>{
         let query = format!("\
             SELECT \
                 user_id, \
@@ -121,6 +121,24 @@ impl Dao {
             refresh_expired : row.get::<NaiveDateTime, _>("refresh_expired"),
         }
     }
+
+    pub async fn is_dup_email(mut db: Connection<FvDb>, email_address: &str) -> bool {
+        let query = format!("\
+            SELECT count(1)
+            FROM fv_user
+            WHERE email_address = {}", email_address
+        );
+
+        let data : Option<PgRow> = sqlx::query(&query)
+            .fetch_one(&mut *db)
+            .await
+            .ok();
+
+        match data {
+            None  => { false },
+            _some => { true  },
+        }
+    }
 }
 
 impl Dto {
@@ -155,6 +173,7 @@ impl Dto {
     }
 
     pub fn check_role_validation(&self) -> bool {
-        return self.user_role.validation();
+        self.user_role.validation()
+        // !(Dao::is_dup_email(&db, &self.email_address)) &&
     }
 }

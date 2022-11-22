@@ -18,36 +18,42 @@ pub fn stage() -> AdHoc {
             // .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
             .mount("/user",
                    routes![
-                       login,
+                       signup,
                        get_member_by_id,
                        // test
                    ])
     })
 }
 
-#[post("/login", format = "json", data = "<login>")]
-pub async fn login(db: Connection<FvDb>, login: Json<Dto>) -> Value {
+#[post("/signup", format = "json", data = "<login>")]
+pub async fn signup(db: Connection<FvDb>, login: Json<Dto>) -> Value {
     let user = login.into_inner();
-    let user = user.to_dao();
-    match user.insert(db).await{
-        Some(result) => {
-            json!({
-                "user_id": result.get::<i32, _>("user_id"),
-                "user_nickname": result.get::<String, _>("user_nickname")
-            })
-        },
-        None => {
-            json!({
-                "user_id": -1,
-                "user_nickname": "error"
-            })
-        },
+    if user.check_role_validation(){
+        let user = user.to_dao();
+        return match user.insert(db).await {
+            Some(result) => {
+                json!({
+                    "user_id": result.get::<i32, _>("user_id"),
+                    "user_nickname": result.get::<String, _>("user_nickname")
+                })
+            },
+            None => {
+                json!({
+                    "user_id": -1,
+                    "user_nickname": "db insert error"
+                })
+            },
+        }
     }
+    json!({
+        "user_id": -1,
+        "user_nickname": "validation error"
+    })
 }
 
 #[get("/<id>")]
 pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> Json<Dto> {
-    return match Dao::select(db, id).await{
+    return match Dao::select_from_id(db, id).await{
         Some(result) => {
             let dto = Dao::match_pg_row(result).to_dto();
             Json(dto)

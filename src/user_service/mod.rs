@@ -37,7 +37,7 @@ pub async fn login(db: Connection<FvDb>, login: Json<Dto>) -> String {
 }
 
 #[get("/<id>")]
-pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> String {
+pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> Json<Dto> {
     // sqlx::query("SELECT content FROM logs WHERE id = ?").bind(id)
     //     .fetch_one(&db.0).await
     //     .and_then(|r| Ok(Log(r.try_get(0)?)))
@@ -46,10 +46,11 @@ pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> String {
     return match Dao::select(db, id).await{
         Some(result) => {
             let dto = Dao::match_pg_row(result).to_dto();
-            format!("{:?}", dto)
+            Json(dto)
         },
         None => {
-            String::from("return none")
+            // String::from("return none")
+            Json(Dto::new())
         },
     }
 }

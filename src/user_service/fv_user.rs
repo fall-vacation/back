@@ -1,8 +1,6 @@
-// use chrono::{NaiveDateTime};
 use sqlx::types::chrono::NaiveDateTime;
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::Connection;
-// use rocket_db_pools::sqlx::postgres::PgQueryResult;
 use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::Row;
 use crate::repository::FvDb;
@@ -137,6 +135,21 @@ impl Dto {
             access_expired: NaiveDateTime::parse_from_str(&*self.access_expired, "%Y-%m-%d %H:%M:%S").unwrap(),
             refresh_token: self.refresh_token.clone(),
             refresh_expired: NaiveDateTime::parse_from_str(&*self.refresh_expired, "%Y-%m-%d %H:%M:%S").unwrap(),
+        }
+    }
+
+    pub fn new() -> Dto {
+        return Dto{
+            user_id: None,
+            email_address: "".to_string(),
+            user_nickname: "".to_string(),
+            user_role: "".to_string(),
+            user_image: "".to_string(),
+            user_farm_id: -1,
+            access_token: "".to_string(),
+            access_expired: "".to_string(),
+            refresh_token: "".to_string(),
+            refresh_expired: "".to_string()
         }
     }
 }

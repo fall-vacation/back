@@ -1,9 +1,10 @@
-use sqlx::types::chrono::NaiveDateTime;
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::Connection;
 use rocket_db_pools::sqlx::postgres::PgRow;
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 use crate::repository::FvDb;
+use crate::enums::user_role::UserRole;
 
 #[derive(Debug)]
 pub struct Dao {
@@ -25,7 +26,7 @@ pub struct Dto {
     user_id: Option<i32>,
     email_address : String,
     user_nickname: String,
-    user_role: String,
+    user_role: UserRole,
     user_image: String,
     user_farm_id: i32,
     access_token: String,
@@ -40,7 +41,7 @@ impl Dao {
             user_id: Option::from(self.user_id),
             email_address: self.email_address.clone(),
             user_nickname: self.user_nickname.clone(),
-            user_role: self.user_role.clone(),
+            user_role: UserRole::get_enums(&self.user_role),
             user_image: self.user_image.clone(),
             user_farm_id: self.user_farm_id.clone(),
             access_token: self.access_token.clone(),
@@ -128,7 +129,7 @@ impl Dto {
             user_id: self.user_id.unwrap_or(0),
             email_address: self.email_address.clone(),
             user_nickname: self.user_nickname.clone(),
-            user_role: self.user_role.clone(),
+            user_role: self.user_role.get_string(),
             user_image: self.user_image.clone(),
             user_farm_id: self.user_farm_id.clone(),
             access_token: self.access_token.clone(),
@@ -143,7 +144,7 @@ impl Dto {
             user_id: None,
             email_address: "".to_string(),
             user_nickname: "".to_string(),
-            user_role: "".to_string(),
+            user_role: UserRole::NONE,
             user_image: "".to_string(),
             user_farm_id: -1,
             access_token: "".to_string(),
@@ -151,5 +152,9 @@ impl Dto {
             refresh_token: "".to_string(),
             refresh_expired: "".to_string()
         }
+    }
+
+    pub fn check_role_validation(&self) -> bool {
+        return self.user_role.validation();
     }
 }

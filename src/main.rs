@@ -3,6 +3,7 @@ use rocket_db_pools::Database;
 
 use fall_vacation_back::repository::FvDb;
 use fall_vacation_back::user_service;
+use fall_vacation_back::farm_service;
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error>{
@@ -12,6 +13,7 @@ async fn main() -> Result<(), rocket::Error>{
         .attach(FvDb::init())
         .mount("/", routes![health_check])
         .attach(user_service::stage())
+        .attach(farm_service::stage())
         .launch()
         .await?;
     Ok(())

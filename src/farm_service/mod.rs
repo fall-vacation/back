@@ -26,34 +26,31 @@ pub fn stage() -> AdHoc {
 pub async fn signup(db: Connection<FvDb>, farm: Json<Dto>) -> Value {
     let farm = farm.into_inner();
     let farm = farm.to_dao();
-    let insert = farm.insert(db).await;
-    // if farm.check_role_validation(){
-    //     let farm = farm.to_dao();
-    //     return match user.insert(db).await {
-    //         Some(result) => {
-    //             json!({
-    //                 "user_id": result.get::<i32, _>("user_id"),
-    //                 "user_nickname": result.get::<String, _>("user_nickname")
-    //             })
-    //         },
-    //         None => {
-    //             json!({
-    //                 "user_id": -1,
-    //                 "user_nickname": "db insert error"
-    //             })
-    //         },
-    //     }
-    // }
-    json!({
-        "user_id": -1,
-        "user_nickname": "validation error"
-    })
+    return match farm.insert(db).await {
+        Some(result) => {
+            json!({
+                "farm_id": result.get::<i32, _>("farm_id"),
+                "farm_name": result.get::<String, _>("farm_name"),
+            })
+        },
+        None => {
+            json!({
+                "farm_id": -1,
+                "farm_name": "db insert error",
+            })
+        },
+    }
 }
 
 #[get("/<id>")]
-pub async fn get_farm(db: Connection<FvDb>, id: i32) -> Value {
-    json!({
-        "user_id": -1,
-        "user_nickname": "validation error"
-    })
+pub async fn get_farm(db: Connection<FvDb>, id: i32) -> Json<Dto> {
+    match Dao::select_from_id(db, id).await {
+        Some(result) => {
+            let dto = Dao::match_pg_row(result).to_dto();
+            Json(dto)
+        }
+        None => {
+            Json(Dto::new())
+        }
+    }
 }

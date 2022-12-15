@@ -97,7 +97,7 @@ impl Dao {
                 access_expired, \
                 refresh_token, \
                 refresh_expired \
-            FROM fv_user
+            FROM fv_user \
             WHERE user_id = {}", user_id
         );
 

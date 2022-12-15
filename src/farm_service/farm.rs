@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use rocket::log::private::log;
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::Connection;
 use rocket_db_pools::sqlx::postgres::PgRow;
@@ -41,7 +40,7 @@ pub struct Dto {
 }
 
 impl Dao {
-    pub fn toDto(&self) -> Dto {
+    pub fn to_dto(&self) -> Dto {
         return Dto {
             farm_id: Some(self.farm_id),
             farm_name: self.farm_name.clone(),
@@ -89,32 +88,55 @@ impl Dao {
         );
 
         return sqlx::query(&query)
-            // .execute(&mut *db)
             .fetch_one(&mut *db)
             .await
             .ok()
     }
 
+    pub async fn select_from_id(mut db: Connection<FvDb>, farm_id: i32) -> Option<PgRow> {
+        let query = format!("\
+            SELECT \
+                farm_id, \
+                farm_name, \
+                farm_address, \
+                farm_address_div, \
+                farm_owner_name, \
+                farm_owner_phone, \
+                price, \
+                stars, \
+                available_use_start, \
+                available_use_end, \
+                available_lesson, \
+                etc \
+            FROM farm \
+            WHERE farm_id = {}", farm_id
+        );
+
+        return sqlx::query(&query)
+            .fetch_one(&mut *db)
+            .await
+            .ok()
+    }
+
+    pub fn match_pg_row(row: PgRow) -> Dao {
+        return Dao{
+            farm_id : row.get::<i32, _>("farm_id"),
+            farm_name : row.get::<String, _>("farm_name"),
+            farm_address : row.get::<String, _>("farm_address"),
+            farm_address_div : row.get::<i32, _>("farm_address_div"),
+            farm_owner_name : row.get::<String, _>("farm_owner_name"),
+            farm_owner_phone : row.get::<Option<String>, _>("farm_owner_phone"),
+            price : row.get::<Option<String>, _>("price"),
+            stars : row.get::<f64, _>("stars"),
+            available_use_start : row.get::<Option<NaiveTime>, _>("available_use_start"),
+            available_use_end : row.get::<Option<NaiveTime>, _>("available_use_end"),
+            available_lesson : row.get::<Option<bool>, _>("available_lesson"),
+            etc : row.get::<Option<String>, _>("etc"),
+        }
+    }
 }
 
 impl Dto {
-    pub fn new() -> Dto {
-        return Dto {
-            farm_id: None,
-            farm_name: "".to_string(),
-            farm_address: "".to_string(),
-            farm_address_div: 0,
-            farm_owner_name: "".to_string(),
-            farm_owner_phone: None,
-            price: None,
-            stars: 0.0,
-            available_use_start: None,
-            available_use_end: None,
-            available_lesson: None,
-            etc: None,
-        }
-    }
-
     pub fn to_dao(&self) -> Dao {
         return Dao {
             farm_id: self.farm_id.unwrap_or(0),
@@ -129,6 +151,23 @@ impl Dto {
             available_use_end: string_to_naive_time(&self.available_use_end),
             available_lesson: self.available_lesson,
             etc: self.etc.clone(),
+        }
+    }
+
+    pub fn new() -> Dto {
+        return Dto {
+            farm_id: None,
+            farm_name: "".to_string(),
+            farm_address: "".to_string(),
+            farm_address_div: 0,
+            farm_owner_name: "".to_string(),
+            farm_owner_phone: None,
+            price: None,
+            stars: 0.0,
+            available_use_start: None,
+            available_use_end: None,
+            available_lesson: None,
+            etc: None,
         }
     }
 }

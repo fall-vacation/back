@@ -1,5 +1,8 @@
 extern crate rocket;
 
+pub mod farm;
+pub mod farm_review;
+
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
 use rocket::serde::json::{Json, Value};
@@ -7,7 +10,6 @@ use rocket::serde::json::serde_json::json;
 use rocket_db_pools::Connection;
 use sqlx::Row;
 
-pub mod farm;
 use crate::repository::FvDb;
 use crate::farm_service::farm::{Dto, Dao};
 
@@ -18,6 +20,7 @@ pub fn stage() -> AdHoc {
             .mount("/farm",
                    routes![
                        signup,
+                       get_farm,
                    ])
     })
 }

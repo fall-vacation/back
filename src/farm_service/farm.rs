@@ -1,10 +1,10 @@
-use std::fmt::Display;
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::Connection;
 use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveTime;
 use sqlx::Row;
 use crate::repository::FvDb;
+use crate::utils::{naive_time_to_string, string_to_naive_time, to_query_string};
 
 #[derive(Debug)]
 pub struct Dao{
@@ -78,13 +78,13 @@ impl Dao {
                             self.farm_address,
                             self.farm_address_div,
                             self.farm_owner_name,
-                            to_query(&self.farm_owner_phone),
-                            to_query(&self.price),
+                            to_query_string(&self.farm_owner_phone),
+                            to_query_string(&self.price),
                             self.stars,
-                            to_query(&self.available_use_start),
-                            to_query(&self.available_use_end),
-                            to_query(&self.available_lesson),
-                            to_query(&self.etc),
+                            to_query_string(&self.available_use_start),
+                            to_query_string(&self.available_use_end),
+                            to_query_string(&self.available_lesson),
+                            to_query_string(&self.etc),
         );
 
         return sqlx::query(&query)
@@ -170,37 +170,4 @@ impl Dto {
             etc: None,
         }
     }
-}
-
-fn string_to_naive_time(opt_data:&Option<String>) -> Option<NaiveTime> {
-    return match opt_data {
-        Some(data) => {
-            match NaiveTime::parse_from_str(data, "%H:%M:%S") {
-                Ok(naive) => { Some(naive) },
-                Err(e) => {
-                    println!("[LOG] string_to_naive_time : {}", e.to_string());
-                    None
-                }
-            }
-        },
-        None => { None },
-    };
-}
-
-fn naive_time_to_string(opt_naive:&Option<NaiveTime>) -> Option<String> {
-    return match opt_naive {
-        Some(naive) => {
-            Some(naive.format("%H:%M:%S").to_string())
-        },
-        None => { None },
-    };
-}
-
-fn to_query<T:Display>(data: &Option<T>) -> String {
-    return match data {
-        Some(data) => {
-            format!("'{}'", data)
-        },
-        None => "NULL".to_string(),
-    };
 }

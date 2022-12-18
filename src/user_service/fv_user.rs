@@ -4,7 +4,9 @@ use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 use crate::repository::FvDb;
+use crate::repository::query_utils::ToQuery;
 use crate::enums::user_role::UserRole;
+use crate::utils::{naive_date_time_to_string, string_to_naive_date_time_default_now};
 
 #[derive(Debug)]
 pub struct Dao {
@@ -12,8 +14,8 @@ pub struct Dao {
     email_address : String,
     user_nickname: String,
     user_role: String,
-    user_image: String,
-    user_farm_id: i32,
+    user_image: Option<String>,
+    user_farm_id: Option<i32>,
     access_token: String,
     access_expired: NaiveDateTime,
     refresh_token: String,
@@ -24,30 +26,30 @@ pub struct Dao {
 #[serde(crate = "rocket::serde")]
 pub struct Dto {
     user_id: Option<i32>,
-    email_address : String,
-    user_nickname: String,
+    email_address : Option<String>,
+    user_nickname: Option<String>,
     user_role: UserRole,
-    user_image: String,
-    user_farm_id: i32,
-    access_token: String,
-    access_expired: String,
-    refresh_token: String,
-    refresh_expired: String,
+    user_image: Option<String>,
+    user_farm_id: Option<i32>,
+    access_token: Option<String>,
+    access_expired: Option<String>,
+    refresh_token: Option<String>,
+    refresh_expired: Option<String>,
 }
 
 impl Dao {
-    pub fn to_dto(&self) -> Dto {
+    pub fn to_dto(self) -> Dto {
         Dto {
-            user_id: Option::from(self.user_id),
-            email_address: self.email_address.clone(),
-            user_nickname: self.user_nickname.clone(),
+            user_id: Some(self.user_id),
+            email_address: Some(self.email_address),
+            user_nickname: Some(self.user_nickname),
             user_role: UserRole::get_enums(&self.user_role),
-            user_image: self.user_image.clone(),
-            user_farm_id: self.user_farm_id.clone(),
-            access_token: self.access_token.clone(),
-            access_expired: self.access_expired.clone().to_string(),
-            refresh_token: self.refresh_token.clone(),
-            refresh_expired: self.refresh_expired.clone().to_string(),
+            user_image: self.user_image,
+            user_farm_id: self.user_farm_id,
+            access_token: Some(self.access_token),
+            access_expired: naive_date_time_to_string(&Some(self.access_expired)),
+            refresh_token: Some(self.refresh_token),
+            refresh_expired: naive_date_time_to_string(&Some(self.refresh_expired)),
         }
     }
 
@@ -66,15 +68,15 @@ impl Dao {
             )\
             VALUES('{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', '{}')\
             RETURNING user_id, user_nickname",
-            self.email_address,
-            self.user_nickname,
-            self.user_role,
-            self.user_image,
-            self.user_farm_id,
-            self.access_token,
-            self.access_expired,
-            self.refresh_token,
-            self.refresh_expired
+                            self.email_address,
+                            self.user_nickname,
+                            self.user_role,
+                            self.user_image.to_query_string(),
+                            self.user_farm_id.to_query_string(),
+                            self.access_token,
+                            self.access_expired,
+                            self.refresh_token,
+                            self.refresh_expired
         );
 
         return sqlx::query(&query)
@@ -113,8 +115,8 @@ impl Dao {
             email_address : row.get::<String, _>("email_address"),
             user_nickname : row.get::<String, _>("user_nickname"),
             user_role : row.get::<String, _>("user_role"),
-            user_image : row.get::<String, _>("user_image"),
-            user_farm_id : row.get::<i32, _>("user_farm_id"),
+            user_image : row.get::<Option<String>, _>("user_image"),
+            user_farm_id : row.get::<Option<i32>, _>("user_farm_id"),
             access_token : row.get::<String, _>("access_token"),
             access_expired : row.get::<NaiveDateTime, _>("access_expired"),
             refresh_token : row.get::<String, _>("refresh_token"),
@@ -142,37 +144,43 @@ impl Dao {
 }
 
 impl Dto {
-    pub fn to_dao(&self) -> Dao {
+    pub fn to_dao(self) -> Dao {
         Dao{
             user_id: self.user_id.unwrap_or(0),
-            email_address: self.email_address.clone(),
-            user_nickname: self.user_nickname.clone(),
+            email_address: self.email_address.unwrap(),
+            user_nickname: self.user_nickname.unwrap(),
             user_role: self.user_role.get_string(),
-            user_image: self.user_image.clone(),
-            user_farm_id: self.user_farm_id.clone(),
-            access_token: self.access_token.clone(),
-            access_expired: NaiveDateTime::parse_from_str(&*self.access_expired, "%Y-%m-%d %H:%M:%S").unwrap(),
-            refresh_token: self.refresh_token.clone(),
-            refresh_expired: NaiveDateTime::parse_from_str(&*self.refresh_expired, "%Y-%m-%d %H:%M:%S").unwrap(),
+            user_image: self.user_image,
+            user_farm_id: self.user_farm_id,
+            access_token: self.access_token.unwrap(),
+            access_expired: string_to_naive_date_time_default_now(&self.access_expired),
+            refresh_token: self.refresh_token.unwrap(),
+            refresh_expired: string_to_naive_date_time_default_now(&self.refresh_expired),
         }
     }
 
     pub fn new() -> Dto {
         return Dto{
             user_id: None,
-            email_address: "".to_string(),
-            user_nickname: "".to_string(),
+            email_address: None,
+            user_nickname: None,
             user_role: UserRole::NONE,
-            user_image: "".to_string(),
-            user_farm_id: -1,
-            access_token: "".to_string(),
-            access_expired: "".to_string(),
-            refresh_token: "".to_string(),
-            refresh_expired: "".to_string()
+            user_image: None,
+            user_farm_id: None,
+            access_token: None,
+            access_expired: None,
+            refresh_token: None,
+            refresh_expired: None,
         }
     }
 
-    pub fn check_role_validation(&self) -> bool {
+    pub fn check_validation(&self) -> bool {
+        self.email_address.is_some() &&
+        self.user_nickname.is_some() &&
+        self.access_token.is_some() &&
+        self.access_expired.is_some() &&
+        self.refresh_token.is_some() &&
+        self.refresh_expired.is_some() &&
         self.user_role.validation()
         // !(Dao::is_dup_email(&db, &self.email_address)) &&
     }

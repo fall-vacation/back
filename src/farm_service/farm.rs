@@ -4,7 +4,8 @@ use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveTime;
 use sqlx::Row;
 use crate::repository::FvDb;
-use crate::utils::{naive_time_to_string, string_to_naive_time, to_query_string};
+use crate::repository::query_utils::ToQuery;
+use crate::utils::{naive_time_to_string, string_to_naive_time};
 
 #[derive(Debug)]
 pub struct Dao{
@@ -26,13 +27,13 @@ pub struct Dao{
 #[serde(crate = "rocket::serde")]
 pub struct Dto {
     farm_id: Option<i32>,
-    farm_name: String,
-    farm_address: String,
-    farm_address_div: i32,
-    farm_owner_name: String,
+    farm_name: Option<String>,
+    farm_address: Option<String>,
+    farm_address_div: Option<i32>,
+    farm_owner_name: Option<String>,
     farm_owner_phone: Option<String>,
     price: Option<String>,
-    stars: f64,
+    stars: Option<f64>,
     available_use_start: Option<String>,
     available_use_end: Option<String>,
     available_lesson: Option<bool>,
@@ -40,20 +41,20 @@ pub struct Dto {
 }
 
 impl Dao {
-    pub fn to_dto(&self) -> Dto {
+    pub fn to_dto(self) -> Dto {
         return Dto {
             farm_id: Some(self.farm_id),
-            farm_name: self.farm_name.clone(),
-            farm_address: self.farm_address.clone(),
-            farm_address_div: self.farm_address_div,
-            farm_owner_name: self.farm_owner_name.clone(),
-            farm_owner_phone: self.farm_owner_phone.clone(),
-            price: self.price.clone(),
-            stars: self.stars,
+            farm_name: Some(self.farm_name),
+            farm_address: Some(self.farm_address),
+            farm_address_div: Some(self.farm_address_div),
+            farm_owner_name: Some(self.farm_owner_name),
+            farm_owner_phone: self.farm_owner_phone,
+            price: self.price,
+            stars: Some(self.stars),
             available_use_start: naive_time_to_string(&self.available_use_start),
             available_use_end: naive_time_to_string(&self.available_use_end),
             available_lesson: self.available_lesson,
-            etc: self.etc.clone(),
+            etc: self.etc,
         }
     }
 
@@ -78,13 +79,13 @@ impl Dao {
                             self.farm_address,
                             self.farm_address_div,
                             self.farm_owner_name,
-                            to_query_string(&self.farm_owner_phone),
-                            to_query_string(&self.price),
+                            self.farm_owner_phone.to_query_string(),
+                            self.price.to_query_string(),
                             self.stars,
-                            to_query_string(&self.available_use_start),
-                            to_query_string(&self.available_use_end),
-                            to_query_string(&self.available_lesson),
-                            to_query_string(&self.etc),
+                            self.available_use_start.to_query_string(),
+                            self.available_use_end.to_query_string(),
+                            self.available_lesson.to_query_string(),
+                            self.etc.to_query_string(),
         );
 
         return sqlx::query(&query)
@@ -137,33 +138,33 @@ impl Dao {
 }
 
 impl Dto {
-    pub fn to_dao(&self) -> Dao {
+    pub fn to_dao(self) -> Dao {
         return Dao {
             farm_id: self.farm_id.unwrap_or(0),
-            farm_name: self.farm_name.clone(),
-            farm_address: self.farm_address.clone(),
-            farm_address_div: self.farm_address_div,
-            farm_owner_name: self.farm_owner_name.clone(),
-            farm_owner_phone: self.farm_owner_phone.clone(),
-            price: self.price.clone(),
-            stars: self.stars,
+            farm_name: self.farm_name.unwrap_or("".to_string()),
+            farm_address: self.farm_address.unwrap_or("".to_string()),
+            farm_address_div: self.farm_address_div.unwrap_or(0),
+            farm_owner_name: self.farm_owner_name.unwrap_or("".to_string()),
+            farm_owner_phone: self.farm_owner_phone,
+            price: self.price,
+            stars: self.stars.unwrap_or(0.0),
             available_use_start: string_to_naive_time(&self.available_use_start),
             available_use_end: string_to_naive_time(&self.available_use_end),
             available_lesson: self.available_lesson,
-            etc: self.etc.clone(),
+            etc: self.etc,
         }
     }
 
     pub fn new() -> Dto {
         return Dto {
             farm_id: None,
-            farm_name: "".to_string(),
-            farm_address: "".to_string(),
-            farm_address_div: 0,
-            farm_owner_name: "".to_string(),
+            farm_name: None,
+            farm_address: None,
+            farm_address_div: None,
+            farm_owner_name: None,
             farm_owner_phone: None,
             price: None,
-            stars: 0.0,
+            stars: None,
             available_use_start: None,
             available_use_end: None,
             available_lesson: None,

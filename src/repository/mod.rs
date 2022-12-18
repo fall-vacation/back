@@ -1,3 +1,5 @@
+pub(crate) mod query_utils;
+
 use rocket_db_pools::{sqlx, Database};
 
 #[derive(Database)]

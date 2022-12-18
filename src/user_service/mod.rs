@@ -28,7 +28,7 @@ pub fn stage() -> AdHoc {
 #[post("/signup", format = "json", data = "<login>")]
 pub async fn signup(db: Connection<FvDb>, login: Json<Dto>) -> Value {
     let user = login.into_inner();
-    if user.check_role_validation(){
+    if user.check_validation(){
         let user = user.to_dao();
         return match user.insert(db).await {
             Some(result) => {
@@ -43,7 +43,7 @@ pub async fn signup(db: Connection<FvDb>, login: Json<Dto>) -> Value {
                     "user_nickname": "db insert error"
                 })
             },
-        }
+        };
     }
     json!({
         "user_id": -1,
@@ -53,7 +53,7 @@ pub async fn signup(db: Connection<FvDb>, login: Json<Dto>) -> Value {
 
 #[get("/<id>")]
 pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> Json<Dto> {
-    return match Dao::select_from_id(db, id).await{
+    match Dao::select_from_id(db, id).await{
         Some(result) => {
             let dto = Dao::match_pg_row(result).to_dto();
             Json(dto)

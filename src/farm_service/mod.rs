@@ -1,6 +1,7 @@
 extern crate rocket;
 
 pub mod farm;
+pub mod farm_urls;
 pub mod farm_review;
 
 use rocket::fairing::AdHoc;

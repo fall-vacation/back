@@ -1,5 +1,6 @@
 use rocket::serde::{Serialize, Deserialize};
 use crate::enums::farm_url_division::FarmUrlDivision;
+use crate::repository::query_utils::ToQuery;
 
 #[derive(Debug)]
 pub struct Dao {
@@ -26,6 +27,16 @@ impl Dao {
             url_division: FarmUrlDivision::get_enum(&self.url_division),
             url: Some(self.url),
         }
+    }
+
+    pub fn q_urls_in_farm_id(farm_ids: &Vec<i32>) -> String {
+        format!("SELECT \
+            farm_urls_id \
+            farm_id \
+            url_division \
+            url \
+        FROM FARM_URLS \
+        WHERE farm_id IN ({})", farm_ids.to_query_string())
     }
 }
 

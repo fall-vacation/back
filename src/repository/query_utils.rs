@@ -44,6 +44,13 @@ impl ToQuery for Option<bool> {
     }
 }
 
+impl ToQuery for Vec<i32> {
+    fn to_query_string(&self) -> String {
+        let iter : Vec<String> = self.iter().map( |&x| x.to_string()).collect();
+        iter.join(", ")
+    }
+}
+
 
 // trait -> struct 로 되는지 확인 필요
 // impl <T:Display + 'static> ToQuery for Option<T> {

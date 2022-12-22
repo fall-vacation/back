@@ -1,9 +1,7 @@
 use rocket::serde::{Serialize, Deserialize};
-use rocket_db_pools::Connection;
 use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
-use crate::repository::FvDb;
 use crate::repository::query_utils::ToQuery;
 use crate::enums::user_role::UserRole;
 use crate::utils::{naive_date_time_to_string, string_to_naive_date_time_default_now};
@@ -53,8 +51,8 @@ impl Dao {
         }
     }
 
-    pub async fn insert(&self, mut db: Connection<FvDb>) -> Option<PgRow>{
-        let query = format!("\
+    pub fn insert_query(&self) -> String {
+        format!("\
             INSERT INTO fv_user(\
                 email_address, \
                 user_nickname, \
@@ -77,17 +75,11 @@ impl Dao {
                             self.access_expired,
                             self.refresh_token,
                             self.refresh_expired
-        );
-
-        return sqlx::query(&query)
-            // .execute(&mut *db)
-            .fetch_one(&mut *db)
-            .await
-            .ok()
+        )
     }
 
-    pub async fn select_from_id(mut db: Connection<FvDb>, user_id: i32) -> Option<PgRow>{
-        let query = format!("\
+    pub fn select_from_id_query(user_id: i32) -> String {
+        format!("\
             SELECT \
                 user_id, \
                 email_address, \
@@ -101,12 +93,7 @@ impl Dao {
                 refresh_expired \
             FROM fv_user \
             WHERE user_id = {}", user_id
-        );
-
-        return sqlx::query(&query)
-            .fetch_one(&mut *db)
-            .await
-            .ok()
+        )
     }
 
     pub fn match_pg_row(row:PgRow) -> Dao {
@@ -124,22 +111,12 @@ impl Dao {
         }
     }
 
-    pub async fn is_dup_email(mut db: Connection<FvDb>, email_address: &str) -> bool {
-        let query = format!("\
-            SELECT count(1)
+    pub fn is_dup_email_query(&self) -> String {
+        format!("\
+            SELECT count(1) as count
             FROM fv_user
-            WHERE email_address = {}", email_address
-        );
-
-        let data : Option<PgRow> = sqlx::query(&query)
-            .fetch_one(&mut *db)
-            .await
-            .ok();
-
-        match data {
-            None  => { false },
-            _some => { true  },
-        }
+            WHERE email_address = {}", self.email_address
+        )
     }
 }
 

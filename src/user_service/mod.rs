@@ -20,56 +20,70 @@ pub fn stage() -> AdHoc {
                    routes![
                        signup,
                        get_member_by_id,
-                       // test
                    ])
     })
 }
 
 #[post("/signup", format = "json", data = "<login>")]
-pub async fn signup(db: Connection<FvDb>, login: Json<Dto>) -> Value {
+pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
     let user = login.into_inner();
     if user.check_validation(){
         let user = user.to_dao();
-        return match user.insert(db).await {
-            Some(result) => {
+
+        match sqlx::query(user.is_dup_email_query().as_str())
+            .fetch_one(&mut *db)
+            .await {
+            Ok(result) => {
+                let count = result.get::<i32, _>("count");
+                if count > 0 {
+                    return json!({
+                        "user_id": -1,
+                        "error_message": "duplicate email address",
+                    })
+                }
+            },
+            Err(error) => {
+                return json!({
+                    "user_id": -1,
+                    "error_message": error.to_string(),
+                })
+            }
+        }
+
+        return match sqlx::query(user.insert_query().as_str())
+            .fetch_one(&mut *db)
+            .await{
+            Ok(result) => {
                 json!({
                     "user_id": result.get::<i32, _>("user_id"),
-                    "user_nickname": result.get::<String, _>("user_nickname")
+                    "user_nickname": result.get::<String, _>("user_nickname"),
                 })
             },
-            None => {
+            Err(error) => {
                 json!({
                     "user_id": -1,
-                    "user_nickname": "db insert error"
+                    "error_message": error.to_string(),
                 })
-            },
-        };
+            }
+        }
     }
     json!({
         "user_id": -1,
-        "user_nickname": "validation error"
+        "error_message": "validation error"
     })
 }
 
 #[get("/<id>")]
-pub async fn get_member_by_id(db: Connection<FvDb>, id: i32) -> Json<Dto> {
-    match Dao::select_from_id(db, id).await{
-        Some(result) => {
+pub async fn get_member_by_id(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
+    match sqlx::query( Dao::select_from_id_query(id).as_str() )
+        .fetch_one(&mut *db)
+        .await {
+        Ok(result) => {
             let dto = Dao::match_pg_row(result).to_dto();
             Json(dto)
         },
-        None => {
+        Err(_) => {
             Json(Dto::new())
         },
     }
 }
-
-// #[get("/test/insert")]
-// pub async fn test(mut db: Connection<FvDb>) -> String {
-//     sqlx::query("INSERT INTO user_service(email_address, user_nickname, user_role, user_image, user_farm_id, access_token, access_expired, refresh_token, refresh_expired)\
-//                  VALUES('email', 'nickname', 'admin', 'aaa.jpg', 0, 'access', '2022-10-10', 'refresh', '2022-11-11')")
-//         .execute(&mut *db)
-//         .await
-//         .ok();
-//     return String::from("user_service list call")
-// }

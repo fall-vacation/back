@@ -8,7 +8,7 @@ pub trait ToQuery {
 impl ToQuery for Option<i32> {
     fn to_query_string(&self) -> String {
         match self {
-            Some(data) => { format!("'{}'", data) },
+            Some(data) => { format!("{}", data) },
             None => "NULL".to_string(),
         }
     }
@@ -19,7 +19,7 @@ impl ToQuery for Option<String> {
         match self {
             Some(data) => match self.len() {
                 0 => { "NULL".to_string() }
-                _ => { format!("'{}'", data) }
+                _ => { format!("{}", data) }
             },
             None => "NULL".to_string(),
         }

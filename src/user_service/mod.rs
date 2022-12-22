@@ -34,7 +34,7 @@ pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
             .fetch_one(&mut *db)
             .await {
             Ok(result) => {
-                let count = result.get::<i32, _>("count");
+                let count = result.get::<i64, _>("count");
                 if count > 0 {
                     return json!({
                         "user_id": -1,
@@ -50,7 +50,8 @@ pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
             }
         }
 
-        return match sqlx::query(user.insert_query().as_str())
+        let query = user.insert_query();
+        return match sqlx::query(query.as_str())
             .fetch_one(&mut *db)
             .await{
             Ok(result) => {

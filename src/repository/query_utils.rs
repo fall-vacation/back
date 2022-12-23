@@ -19,17 +19,23 @@ impl ToQuery for Option<String> {
         match self {
             Some(data) => match self.len() {
                 0 => { "NULL".to_string() }
-                _ => { format!("{}", data) }
+                _ => { format!("'{}'", data) }
             },
             None => "NULL".to_string(),
         }
     }
 }
 
+impl ToQuery for String {
+    fn to_query_string(&self) -> String {
+        format!("'{}'", self)
+    }
+}
+
 impl ToQuery for Option<NaiveTime> {
     fn to_query_string(&self) -> String {
         match self {
-            Some(naive) => naive.format("%H:%M:%S").to_string(),
+            Some(naive) => naive.format("'%H:%M:%S'").to_string(),
             None => "NULL".to_string(),
         }
     }
@@ -38,7 +44,7 @@ impl ToQuery for Option<NaiveTime> {
 impl ToQuery for Option<bool> {
     fn to_query_string(&self) -> String {
         match self {
-            Some(data) => { format!("'{}'", data) },
+            Some(data) => { format!("{}", data) },
             None => "NULL".to_string(),
         }
     }

@@ -1,11 +1,10 @@
 use rocket::serde::{Serialize, Deserialize};
-use rocket_db_pools::Connection;
 use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveTime;
 use sqlx::Row;
-use crate::repository::FvDb;
 use crate::repository::query_utils::ToQuery;
 use crate::utils::{naive_time_to_string, string_to_naive_time};
+use crate::farm_service::farm_urls;
 
 #[derive(Debug)]
 pub struct Dao{
@@ -38,10 +37,12 @@ pub struct Dto {
     available_use_end: Option<String>,
     available_lesson: Option<bool>,
     etc: Option<String>,
+
+    farm_urls: Vec<farm_urls::Dto>,
 }
 
 impl Dao {
-    pub fn to_dto(self) -> Dto {
+    pub fn to_dto(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
         return Dto {
             farm_id: Some(self.farm_id),
             farm_name: Some(self.farm_name),
@@ -55,11 +56,16 @@ impl Dao {
             available_use_end: naive_time_to_string(&self.available_use_end),
             available_lesson: self.available_lesson,
             etc: self.etc,
+            farm_urls,
         }
     }
 
-    pub async fn insert(&self, mut db: Connection<FvDb>) -> Option<PgRow>{
-        let query = format!("\
+    pub fn get_farm_id(&self) -> i32 {
+        self.farm_id
+    }
+
+    pub fn insert_query(&self) -> String {
+        format!("\
             INSERT INTO farm(\
                 farm_name, \
                 farm_address, \
@@ -73,12 +79,12 @@ impl Dao {
                 available_lesson, \
                 etc \
             )\
-            VALUES('{}', '{}', '{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', '{}')\
+            VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})\
             RETURNING farm_id, farm_name",
-                            self.farm_name,
-                            self.farm_address,
+                            self.farm_name.to_query_string(),
+                            self.farm_address.to_query_string(),
                             self.farm_address_div,
-                            self.farm_owner_name,
+                            self.farm_owner_name.to_query_string(),
                             self.farm_owner_phone.to_query_string(),
                             self.price.to_query_string(),
                             self.stars,
@@ -86,16 +92,11 @@ impl Dao {
                             self.available_use_end.to_query_string(),
                             self.available_lesson.to_query_string(),
                             self.etc.to_query_string(),
-        );
-
-        return sqlx::query(&query)
-            .fetch_one(&mut *db)
-            .await
-            .ok()
+        )
     }
 
-    pub async fn select_from_id(mut db: Connection<FvDb>, farm_id: i32) -> Option<PgRow> {
-        let query = format!("\
+    pub fn select_from_id_query(farm_id: i32) -> String {
+        format!("\
             SELECT \
                 farm_id, \
                 farm_name, \
@@ -110,13 +111,7 @@ impl Dao {
                 available_lesson, \
                 etc \
             FROM farm \
-            WHERE farm_id = {}", farm_id
-        );
-
-        return sqlx::query(&query)
-            .fetch_one(&mut *db)
-            .await
-            .ok()
+            WHERE farm_id = {}", farm_id)
     }
 
     pub fn match_pg_row(row: PgRow) -> Dao {
@@ -169,6 +164,11 @@ impl Dto {
             available_use_end: None,
             available_lesson: None,
             etc: None,
+            farm_urls: Vec::new(),
         }
+    }
+
+    pub fn get_farm_urls_clone(&self) -> Vec<farm_urls::Dto> {
+        self.farm_urls.clone()
     }
 }

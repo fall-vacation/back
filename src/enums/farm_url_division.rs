@@ -1,6 +1,6 @@
 use rocket::serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
 pub enum FarmUrlDivision {
     Homepage,

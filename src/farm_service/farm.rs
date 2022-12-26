@@ -2,7 +2,7 @@ use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveTime;
 use sqlx::Row;
-use crate::repository::query_utils::ToQuery;
+use crate::repository::query_to_string::ToQuery;
 use crate::utils::{naive_time_to_string, string_to_naive_time};
 use crate::farm_service::farm_urls;
 

@@ -13,6 +13,7 @@ use sqlx::Row;
 
 use crate::repository::FvDb;
 use crate::farm_service::farm::{Dto, Dao};
+use crate::repository::match_pg_row::{DaoStruct, DtoStruct};
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Farm Stage", |rocket| async {
@@ -21,7 +22,7 @@ pub fn stage() -> AdHoc {
             .mount("/farm",
                    routes![
                        signup,
-                       // get_farm,
+                       get_farm,
                    ])
     })
 }
@@ -74,11 +75,7 @@ pub async fn get_farm(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
                 .fetch_all(&mut *db)
                 .await{
                 Ok(result) => {
-                    let mut farm_urls = Vec::new();
-                    for each in result {
-                        farm_urls.push(farm_urls::Dao::match_pg_row(each).to_dto());
-                    }
-                    farm_urls
+                    farm_urls::Dao::to_vec_dto(result)
                 },
                 Err(error) => {
                     println!("error : {}", error);

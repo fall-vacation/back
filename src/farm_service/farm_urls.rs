@@ -56,9 +56,9 @@ impl Dao {
 
     pub fn urls_from_farm_id_query(farm_ids: i32) -> String {
         format!("SELECT \
-            farm_urls_id \
-            farm_id \
-            url_division \
+            farm_urls_id, \
+            farm_id, \
+            url_division, \
             url \
         FROM FARM_URLS \
         WHERE farm_id = {}", farm_ids)
@@ -66,9 +66,9 @@ impl Dao {
 
     pub fn urls_in_farm_id_query(farm_ids: &Vec<i32>) -> String {
         format!("SELECT \
-            farm_urls_id \
-            farm_id \
-            url_division \
+            farm_urls_id, \
+            farm_id, \
+            url_division, \
             url \
         FROM FARM_URLS \
         WHERE farm_id IN ({})", farm_ids.to_query_string())

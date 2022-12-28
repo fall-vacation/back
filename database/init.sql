@@ -1,7 +1,7 @@
 CREATE TABLE FARM(
                      farm_id serial NOT NULL PRIMARY KEY,
                      farm_name varchar(50) NOT NULL,
-                     farm_address varchar(50),
+                     farm_address varchar(50) NOT NULL,
                      farm_address_div integer,
                      farm_owner_name varchar(50),
                      farm_owner_phone varchar(50),
@@ -289,3 +289,12 @@ INSERT INTO farm(farm_name, farm_address, farm_address_div, farm_owner_name, far
 INSERT INTO farm(farm_name, farm_address, farm_address_div, farm_owner_name, farm_owner_phone, price, stars, available_use_start, available_use_end, available_lesson, etc) VALUES ('솔밭농장','서울 은평구 진관동 272-3',1,null,'010-6209-4757',null,0.0,null,null,false,null);
 INSERT INTO farm(farm_name, farm_address, farm_address_div, farm_owner_name, farm_owner_phone, price, stars, available_use_start, available_use_end, available_lesson, etc) VALUES ('무지개텃밭','서울 성동구 행당동 76-3',1,null,null,null,0.0,null,null,false,null);
 INSERT INTO farm(farm_name, farm_address, farm_address_div, farm_owner_name, farm_owner_phone, price, stars, available_use_start, available_use_end, available_lesson, etc) VALUES ('양천 도시 농업 공원','서울특별시 양천구 신월7동',1,null,' 02-2620-3578',null,0.0,null,null,false,null);
+
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '구로 주말농장'),'ETC','https://cityfarmer.seoul.go.kr/ntcn/www/view.do?ntcnSn=2202&ntcnSeCode=NGC002&key=1905228762688&pageIndex=1&sc=&sw=%EA%B5%AC%EB%A1%9C%EA%B5%AC');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '문래동 공공공지 도시텃밭'),'ETC','https://cityfarmer.seoul.go.kr/ntcn/www/view.do?ntcnSn=2203&ntcnSeCode=NGC002&key=1905228762688&pageIndex=1&sc=&sw=%EA%B5%AC%EB%A1%9C');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '우리주말농장'),'ETC','http://woorifarmer435.modoo.at');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '친환경 도시텃밭'),'ETC','https://cityfarmer.seoul.go.kr/ntcn/www/view.do?ntcnSn=1421&ntcnSeCode=NGC002&key=1905228762688&pageIndex=1&sc=&sw=%EA%B0%95%EB%8F%99');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '무수골주말농장'),'ETC','http://hanhome.jinbo.net/');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '도봉산초원주말농장'),'ETC','https://blog.naver.com/limte3000');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '팜스테이마을'),'ETC','http://www.farmstay.co.kr/');
+INSERT INTO farm_urls(farm_id, url_division, url) VALUES ((SELECT farm_id FROM farm WHERE farm_name = '홍씨네 텃밭 농원'),'ETC','https://hongsfarm.modoo.at/?pc=1');

@@ -31,6 +31,7 @@ pub trait DtoStruct {
     type Dao : DaoStruct;
 
     fn to_dao(self) -> Self::Dao;
+    fn new() -> Self;
 
     fn to_vec_dto(rows : Vec<Self::Dao>) -> Vec<<<Self as DtoStruct>::Dao as DaoStruct>::Dto>
     {

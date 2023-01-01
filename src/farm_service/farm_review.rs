@@ -1,9 +1,8 @@
 use rocket::serde::{Serialize, Deserialize};
+use sqlx::postgres::PgRow;
+use sqlx::Row;
 use sqlx::types::chrono::NaiveTime;
-// use rocket_db_pools::Connection;
-// use rocket_db_pools::sqlx::postgres::PgRow;
-// use sqlx::Row;
-// use crate::repository::FvDb;
+use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 use crate::utils::{naive_time_to_string, string_to_naive_time};
 
 #[derive(Debug)]
@@ -33,8 +32,24 @@ pub struct Dto{
     delete_time: Option<String>,
 }
 
-impl Dao {
-    pub fn to_dto(self) -> Dto {
+impl DaoStruct for Dao{
+    type Dto = Dto;
+
+    fn match_pg_row(row: &PgRow) -> Self {
+        Dao{
+            review_id : row.get::<i32, _>("review_id"),
+            farm_id : row.get::<i32, _>("farm_id"),
+            user_id : row.get::<i32, _>("user_id"),
+            contents : row.get::<Option<String>, _>("contents"),
+            hit : row.get::<Option<i32>, _>("hit"),
+            stars : row.get::<Option<i32>, _>("stars"),
+            create_time : row.get::<Option<NaiveTime>, _>("create_time"),
+            modify_time : row.get::<Option<NaiveTime>, _>("modify_time"),
+            delete_time : row.get::<Option<NaiveTime>, _>("delete_time"),
+        }
+    }
+
+    fn to_dto(self) -> Self::Dto {
         Dto {
             review_id : Some(self.review_id),
             farm_id : Some(self.farm_id),
@@ -49,8 +64,10 @@ impl Dao {
     }
 }
 
-impl Dto {
-    pub fn to_dao(self) -> Dao {
+impl DtoStruct for Dto {
+    type Dao = Dao;
+
+    fn to_dao(self) -> Self::Dao {
         Dao {
             review_id : self.review_id.unwrap_or(0),
             farm_id : self.farm_id.unwrap_or(0),
@@ -64,7 +81,7 @@ impl Dto {
         }
     }
 
-    pub fn new() -> Dto {
+    fn new() -> Self {
         Dto {
             review_id : None,
             farm_id : None,

@@ -42,7 +42,7 @@ pub struct Dto {
 }
 
 impl Dao {
-    pub fn to_dto(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
+    pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
         return Dto {
             farm_id: Some(self.farm_id),
             farm_name: Some(self.farm_name),

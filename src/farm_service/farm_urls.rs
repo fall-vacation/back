@@ -2,7 +2,7 @@ use rocket::serde::{Serialize, Deserialize};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 use crate::enums::farm_url_division::FarmUrlDivision;
-use crate::repository::match_pg_row::{DaoStruct, DtoStruct};
+use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 use crate::repository::query_to_string::ToQuery;
 
 #[derive(Debug)]
@@ -86,19 +86,19 @@ impl DtoStruct for Dto {
             url: self.url.unwrap()
         }
     }
-}
 
-impl Dto {
-    pub fn set_farm_id(&mut self, farm_id: i32) {
-        self.farm_id = Some(farm_id);
-    }
-
-    pub fn new() -> Dto {
+    fn new() -> Self {
         Dto {
             farm_urls_id: None,
             farm_id: None,
             url_division: FarmUrlDivision::ETC,
             url: None,
         }
+    }
+}
+
+impl Dto {
+    pub fn set_farm_id(&mut self, farm_id: i32) {
+        self.farm_id = Some(farm_id);
     }
 }

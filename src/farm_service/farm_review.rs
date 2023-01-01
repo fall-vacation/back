@@ -2,6 +2,7 @@ use rocket::serde::{Serialize, Deserialize};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 use sqlx::types::chrono::NaiveTime;
+use crate::repository::query_to_string::ToQuery;
 use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 use crate::utils::{naive_time_to_string, string_to_naive_time};
 
@@ -11,8 +12,8 @@ pub struct Dao{
     farm_id: i32,
     user_id: i32,
     contents: Option<String>,
-    hit: Option<i32>,
-    stars: Option<i32>,
+    hit: i32,
+    stars: i32,
     create_time: Option<NaiveTime>,
     modify_time: Option<NaiveTime>,
     delete_time: Option<NaiveTime>,
@@ -41,8 +42,8 @@ impl DaoStruct for Dao{
             farm_id : row.get::<i32, _>("farm_id"),
             user_id : row.get::<i32, _>("user_id"),
             contents : row.get::<Option<String>, _>("contents"),
-            hit : row.get::<Option<i32>, _>("hit"),
-            stars : row.get::<Option<i32>, _>("stars"),
+            hit : row.get::<i32, _>("hit"),
+            stars : row.get::<i32, _>("stars"),
             create_time : row.get::<Option<NaiveTime>, _>("create_time"),
             modify_time : row.get::<Option<NaiveTime>, _>("modify_time"),
             delete_time : row.get::<Option<NaiveTime>, _>("delete_time"),
@@ -55,12 +56,51 @@ impl DaoStruct for Dao{
             farm_id : Some(self.farm_id),
             user_id : Some(self.user_id),
             contents : self.contents,
-            hit : self.hit,
-            stars : self.stars,
+            hit : Some(self.hit),
+            stars : Some(self.stars),
             create_time : naive_time_to_string(&self.create_time),
             modify_time : naive_time_to_string(&self.modify_time),
             delete_time : naive_time_to_string(&self.delete_time),
         }
+    }
+}
+
+impl Dao {
+    pub fn reviews_from_farm_id_query(farm_id: i32) -> String {
+        format!("SELECT \
+            review_id,
+            farm_id,
+            user_id,
+            contents,
+            hit,
+            stars,
+            create_time,
+            modify_time,
+            delete_time
+        FROM FARM_REVIEW \
+        WHERE farm_id = {}", farm_id)
+    }
+
+    pub fn insert_query(&self) -> String {
+        format!("INSERT INTO FARM_REVIEW(\
+            farm_id, \
+            user_id, \
+            contents, \
+            hit, \
+            stars, \
+            create_time, \
+            modify_time, \
+            delete_time) \
+        VALUES({}, {}, {}, {}, {}, {}, {}, {})\
+        RETURNING review_id, farm_id",
+        self.farm_id,
+        self.user_id,
+        self.contents.to_query_string(),
+        self.hit,
+        self.stars,
+        self.create_time.to_query_string(),
+        self.modify_time.to_query_string(),
+        self.delete_time.to_query_string())
     }
 }
 
@@ -73,8 +113,8 @@ impl DtoStruct for Dto {
             farm_id : self.farm_id.unwrap_or(0),
             user_id : self.user_id.unwrap_or(0),
             contents : self.contents,
-            hit : self.hit,
-            stars : self.stars,
+            hit : self.hit.unwrap_or(0),
+            stars : self.stars.unwrap_or(0),
             create_time : string_to_naive_time(&self.create_time),
             modify_time : string_to_naive_time(&self.modify_time),
             delete_time : string_to_naive_time(&self.delete_time),

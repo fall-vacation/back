@@ -5,6 +5,8 @@ use sqlx::Row;
 use crate::repository::query_to_string::ToQuery;
 use crate::utils::{naive_time_to_string, string_to_naive_time};
 use crate::farm_service::farm_urls;
+use crate::farm_service::farm_review;
+use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 
 #[derive(Debug)]
 pub struct Dao{
@@ -38,12 +40,32 @@ pub struct Dto {
     available_lesson: Option<bool>,
     etc: Option<String>,
 
-    farm_urls: Vec<farm_urls::Dto>,
+    farm_urls: Option<Vec<farm_urls::Dto>>,
+    farm_reviews: Option<Vec<farm_review::Dto>>,
 }
 
-impl Dao {
-    pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
-        return Dto {
+impl DaoStruct for Dao {
+    type Dto = Dto;
+
+    fn match_pg_row(row: &PgRow) -> Self {
+        Dao{
+            farm_id : row.get::<i32, _>("farm_id"),
+            farm_name : row.get::<String, _>("farm_name"),
+            farm_address : row.get::<String, _>("farm_address"),
+            farm_address_div : row.get::<i32, _>("farm_address_div"),
+            farm_owner_name : row.get::<Option<String>, _>("farm_owner_name"),
+            farm_owner_phone : row.get::<Option<String>, _>("farm_owner_phone"),
+            price : row.get::<Option<String>, _>("price"),
+            stars : row.get::<f64, _>("stars"),
+            available_use_start : row.get::<Option<NaiveTime>, _>("available_use_start"),
+            available_use_end : row.get::<Option<NaiveTime>, _>("available_use_end"),
+            available_lesson : row.get::<Option<bool>, _>("available_lesson"),
+            etc : row.get::<Option<String>, _>("etc"),
+        }
+    }
+
+    fn to_dto(self) -> Self::Dto {
+        Dto {
             farm_id: Some(self.farm_id),
             farm_name: Some(self.farm_name),
             farm_address: Some(self.farm_address),
@@ -56,7 +78,48 @@ impl Dao {
             available_use_end: naive_time_to_string(&self.available_use_end),
             available_lesson: self.available_lesson,
             etc: self.etc,
-            farm_urls,
+            farm_urls: None,
+            farm_reviews: None,
+        }
+    }
+}
+
+impl Dao {
+    pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
+        Dto {
+            farm_id: Some(self.farm_id),
+            farm_name: Some(self.farm_name),
+            farm_address: Some(self.farm_address),
+            farm_address_div: Some(self.farm_address_div),
+            farm_owner_name: self.farm_owner_name,
+            farm_owner_phone: self.farm_owner_phone,
+            price: self.price,
+            stars: Some(self.stars),
+            available_use_start: naive_time_to_string(&self.available_use_start),
+            available_use_end: naive_time_to_string(&self.available_use_end),
+            available_lesson: self.available_lesson,
+            etc: self.etc,
+            farm_urls: Some(farm_urls),
+            farm_reviews: None,
+        }
+    }
+
+    pub fn to_dto_with_urls_reviews(self, farm_urls: Vec<farm_urls::Dto>, farm_review: Vec<farm_review::Dto>) -> Dto {
+        Dto {
+            farm_id: Some(self.farm_id),
+            farm_name: Some(self.farm_name),
+            farm_address: Some(self.farm_address),
+            farm_address_div: Some(self.farm_address_div),
+            farm_owner_name: self.farm_owner_name,
+            farm_owner_phone: self.farm_owner_phone,
+            price: self.price,
+            stars: Some(self.stars),
+            available_use_start: naive_time_to_string(&self.available_use_start),
+            available_use_end: naive_time_to_string(&self.available_use_end),
+            available_lesson: self.available_lesson,
+            etc: self.etc,
+            farm_urls: Some(farm_urls),
+            farm_reviews: Some(farm_review),
         }
     }
 
@@ -113,28 +176,13 @@ impl Dao {
             FROM farm \
             WHERE farm_id = {}", farm_id)
     }
-
-    pub fn match_pg_row(row: PgRow) -> Dao {
-        return Dao{
-            farm_id : row.get::<i32, _>("farm_id"),
-            farm_name : row.get::<String, _>("farm_name"),
-            farm_address : row.get::<String, _>("farm_address"),
-            farm_address_div : row.get::<i32, _>("farm_address_div"),
-            farm_owner_name : row.get::<Option<String>, _>("farm_owner_name"),
-            farm_owner_phone : row.get::<Option<String>, _>("farm_owner_phone"),
-            price : row.get::<Option<String>, _>("price"),
-            stars : row.get::<f64, _>("stars"),
-            available_use_start : row.get::<Option<NaiveTime>, _>("available_use_start"),
-            available_use_end : row.get::<Option<NaiveTime>, _>("available_use_end"),
-            available_lesson : row.get::<Option<bool>, _>("available_lesson"),
-            etc : row.get::<Option<String>, _>("etc"),
-        }
-    }
 }
 
-impl Dto {
-    pub fn to_dao(self) -> Dao {
-        return Dao {
+impl DtoStruct for Dto {
+    type Dao = Dao;
+
+    fn to_dao(self) -> Self::Dao {
+        Dao {
             farm_id: self.farm_id.unwrap_or(0),
             farm_name: self.farm_name.unwrap_or("".to_string()),
             farm_address: self.farm_address.unwrap_or("".to_string()),
@@ -150,8 +198,8 @@ impl Dto {
         }
     }
 
-    pub fn new() -> Dto {
-        return Dto {
+    fn new() -> Self {
+        Dto {
             farm_id: None,
             farm_name: None,
             farm_address: None,
@@ -164,11 +212,17 @@ impl Dto {
             available_use_end: None,
             available_lesson: None,
             etc: None,
-            farm_urls: Vec::new(),
+            farm_urls: None,
+            farm_reviews: None,
         }
     }
+}
 
+impl Dto {
     pub fn get_farm_urls_clone(&self) -> Vec<farm_urls::Dto> {
-        self.farm_urls.clone()
+        match &self.farm_urls {
+            Some(data) => data.clone(),
+            None => Vec::new()
+        }
     }
 }

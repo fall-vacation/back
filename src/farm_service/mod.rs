@@ -23,6 +23,8 @@ pub fn stage() -> AdHoc {
                    routes![
                        signup,
                        get_farm,
+                       review_signup,
+                       get_farm_review,
                    ])
     })
 }
@@ -68,7 +70,7 @@ pub async fn get_farm(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
         .fetch_one(&mut *db)
         .await {
         Ok(result) => {
-            let dao = Dao::match_pg_row(result);
+            let dao = Dao::match_pg_row(&result);
             let farm_urls_query = farm_urls::Dao::urls_from_farm_id_query(dao.get_farm_id());
             let farm_urls : Vec<farm_urls::Dto>
                 = match sqlx::query(farm_urls_query.as_str())
@@ -78,16 +80,68 @@ pub async fn get_farm(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
                     farm_urls::Dao::to_vec_dto(result)
                 },
                 Err(error) => {
-                    println!("error : {}", error);
+                    println!("farm_urls_query error : {}", error);
                     Vec::new()
                 }
             };
-            let dto = dao.to_dto_with_urls(farm_urls);
+            let farm_review_query = farm_review::Dao::reviews_from_farm_id_query(dao.get_farm_id());
+            let farm_reviews : Vec<farm_review::Dto>
+                = match sqlx::query(farm_review_query.as_str())
+                .fetch_all(&mut *db)
+                .await{
+                Ok(result) => {
+                    farm_review::Dao::to_vec_dto(result)
+                },
+                Err(error) => {
+                    println!("farm_review_query error : {}", error);
+                    Vec::new()
+                }
+            };
+            let dto = dao.to_dto_with_urls_reviews(farm_urls, farm_reviews);
             Json(dto)
         },
         Err(error) => {
             println!("error : {}", error.to_string());
             Json(Dto::new())
+        }
+    }
+}
+
+#[post("/review/signup", format = "json", data = "<farm_review>")]
+pub async fn review_signup(mut db: Connection<FvDb>, farm_review: Json<farm_review::Dto>) -> Value {
+    let farm_review = farm_review.into_inner();
+    let farm_review = farm_review.to_dao();
+    return match sqlx::query(farm_review.insert_query().as_str())
+        .fetch_one(&mut *db)
+        .await {
+        Ok(result) => {
+            json!({
+                    "review_id": result.get::<i32, _>("review_id"),
+                    "farm_id": result.get::<i32, _>("farm_id"),
+                })
+        },
+        Err(error) => {
+            json!({
+                    "review_id": -1,
+                    "error_message": error.to_string(),
+                })
+        },
+    }
+}
+
+
+#[get("/review/<farm_id>")]
+pub async fn get_farm_review(mut db: Connection<FvDb>, farm_id: i32) -> Json<Vec<farm_review::Dto>> {
+    match sqlx::query(farm_review::Dao::reviews_from_farm_id_query(farm_id).as_str())
+        .fetch_all(&mut *db)
+        .await{
+        Ok(result) => {
+            let data = farm_review::Dao::to_vec_dto(result);
+            Json(data)
+        }
+        Err(error) => {
+            println!("error : {}", error.to_string());
+            Json(Vec::new())
         }
     }
 }

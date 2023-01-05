@@ -84,42 +84,21 @@ impl DaoStruct for Dao {
 }
 
 impl Dao {
-    pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
-        Dto {
-            farm_id: Some(self.farm_id),
-            farm_name: Some(self.farm_name),
-            farm_address: Some(self.farm_address),
-            farm_address_div: Some(self.farm_address_div),
-            farm_owner_name: self.farm_owner_name,
-            farm_owner_phone: self.farm_owner_phone,
-            price: self.price,
-            stars: Some(self.stars),
-            available_use_start: naive_time_to_string(&self.available_use_start),
-            available_use_end: naive_time_to_string(&self.available_use_end),
-            available_lesson: self.available_lesson,
-            etc: self.etc,
-            farm_urls: Some(farm_urls),
-            farm_reviews: None,
-        }
-    }
+    // pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
+    //     let mut dto = self.to_dto();
+    //     dto.set_farm_urls(farm_urls);
+    //     dto
+    // }
 
-    pub fn to_dto_with_urls_reviews(self, farm_urls: Vec<farm_urls::Dto>, farm_review: Vec<farm_review::Dto>) -> Dto {
-        Dto {
-            farm_id: Some(self.farm_id),
-            farm_name: Some(self.farm_name),
-            farm_address: Some(self.farm_address),
-            farm_address_div: Some(self.farm_address_div),
-            farm_owner_name: self.farm_owner_name,
-            farm_owner_phone: self.farm_owner_phone,
-            price: self.price,
-            stars: Some(self.stars),
-            available_use_start: naive_time_to_string(&self.available_use_start),
-            available_use_end: naive_time_to_string(&self.available_use_end),
-            available_lesson: self.available_lesson,
-            etc: self.etc,
-            farm_urls: Some(farm_urls),
-            farm_reviews: Some(farm_review),
-        }
+    pub fn to_dto_with_urls_reviews(
+        self,
+        farm_urls: Option<Vec<farm_urls::Dto>>,
+        farm_review: Option<Vec<farm_review::Dto>>,
+    ) -> Dto {
+        let mut dto = self.to_dto();
+        dto .set_farm_urls(farm_urls)
+            .set_farm_reviews(farm_review);
+        dto
     }
 
     pub fn get_farm_id(&self) -> i32 {
@@ -218,10 +197,38 @@ impl DtoStruct for Dto {
 }
 
 impl Dto {
-    pub fn get_farm_urls_clone(&self) -> Vec<farm_urls::Dto> {
-        match &self.farm_urls {
-            Some(data) => data.clone(),
-            None => Vec::new()
-        }
+    pub fn get_dao_and_urls(mut self) -> (Dao, Option<Vec<farm_urls::Dto>>) {
+        let farm_urls = self.farm_urls;
+        self.farm_urls = None;
+        let dao = self.to_dao();
+        return (dao, farm_urls)
     }
+
+    pub fn set_farm_urls(&mut self, farm_urls: Option<Vec<farm_urls::Dto>>) -> &mut Dto {
+        self.farm_urls = farm_urls;
+        self
+    }
+
+    pub fn set_farm_reviews(&mut self, farm_review: Option<Vec<farm_review::Dto>>) -> &mut Dto {
+        self.farm_reviews = farm_review;
+        self
+    }
+
+    pub fn get_id(&self) -> Option<i32>{
+        self.farm_id
+    }
+
+    // pub async fn set_urls_review(db: &mut Query<'_, FvDb, None>, dtos: &mut Vec<Dto>) {
+    //     let mut ids = Vec::new();
+    //     for each in dtos {
+    //         ids.push(each.get_id().unwrap_or(0));
+    //     }
+    //
+    //     match sqlx::query(farm_urls::Dao::urls_in_farm_id_query(&ids).as_str())
+    //         .fetch_all(&*db)
+    //         .await {
+    //         Ok(_result) => {},
+    //         Err(_error) => {}
+    //     }
+    // }
 }

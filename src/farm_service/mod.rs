@@ -3,6 +3,7 @@ extern crate rocket;
 pub mod farm;
 pub mod farm_urls;
 pub mod farm_review;
+mod request_form;
 
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
@@ -23,6 +24,7 @@ pub fn stage() -> AdHoc {
                    routes![
                        signup,
                        get_farm,
+                       get_farm_list,
                        review_signup,
                        get_farm_review,
                    ])
@@ -32,22 +34,24 @@ pub fn stage() -> AdHoc {
 #[post("/signup", format = "json", data = "<farm>")]
 pub async fn signup(mut db: Connection<FvDb>, farm: Json<Dto>) -> Value {
     let farm = farm.into_inner();
-    let farm_urls = farm.get_farm_urls_clone();
+    let (farm, farm_urls)= farm.get_dao_and_urls();
 
-    let farm = farm.to_dao();
     return match sqlx::query(farm.insert_query().as_str())
         .fetch_one(&mut *db)
         .await {
             Ok(result) => {
                 let farm_id = result.get::<i32, _>("farm_id");
 
-                for mut each in farm_urls{
-                    each.set_farm_id(farm_id);
-                    let each = each.to_dao();
-                    sqlx::query(each.insert_query().as_str() )
-                        .fetch_one(&mut *db)
-                        .await
-                        .ok();
+                if farm_urls.is_some() {
+                    let farm_urls = farm_urls.unwrap();
+                    for mut each in farm_urls{
+                        each.set_farm_id(farm_id);
+                        let each = each.to_dao();
+                        sqlx::query(each.insert_query().as_str() )
+                            .fetch_one(&mut *db)
+                            .await
+                            .ok();
+                    }
                 }
 
                 json!({
@@ -72,29 +76,27 @@ pub async fn get_farm(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
         Ok(result) => {
             let dao = Dao::match_pg_row(&result);
             let farm_urls_query = farm_urls::Dao::urls_from_farm_id_query(dao.get_farm_id());
-            let farm_urls : Vec<farm_urls::Dto>
-                = match sqlx::query(farm_urls_query.as_str())
+            let farm_urls = match sqlx::query(farm_urls_query.as_str())
                 .fetch_all(&mut *db)
                 .await{
                 Ok(result) => {
-                    farm_urls::Dao::to_vec_dto(result)
+                    Some(farm_urls::Dao::to_vec_dto(result))
                 },
                 Err(error) => {
                     println!("farm_urls_query error : {}", error);
-                    Vec::new()
+                    None
                 }
             };
             let farm_review_query = farm_review::Dao::reviews_from_farm_id_query(dao.get_farm_id());
-            let farm_reviews : Vec<farm_review::Dto>
-                = match sqlx::query(farm_review_query.as_str())
+            let farm_reviews = match sqlx::query(farm_review_query.as_str())
                 .fetch_all(&mut *db)
                 .await{
                 Ok(result) => {
-                    farm_review::Dao::to_vec_dto(result)
+                    Some(farm_review::Dao::to_vec_dto(result))
                 },
                 Err(error) => {
                     println!("farm_review_query error : {}", error);
-                    Vec::new()
+                    None
                 }
             };
             let dto = dao.to_dto_with_urls_reviews(farm_urls, farm_reviews);
@@ -107,6 +109,25 @@ pub async fn get_farm(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
     }
 }
 
+#[get("/list?<param..>")]
+pub async fn get_farm_list(mut db: Connection<FvDb>, param: request_form::ListForm) -> Json<Vec<Dto>> {
+    match sqlx::query(param.get_list_query().as_str())
+        .fetch_all(&mut *db)
+        .await {
+        Ok(result) => {
+            let data = Dao::to_vec_dto(result);
+            Json(data)
+        },
+        Err(error) => {
+            println!("error : {}", error.to_string());
+            let data = Vec::new();
+            Json(data)}
+    }
+}
+
+
+// REVIEWS ==========================================================================================
+// ==================================================================================================
 #[post("/review/signup", format = "json", data = "<farm_review>")]
 pub async fn review_signup(mut db: Connection<FvDb>, farm_review: Json<farm_review::Dto>) -> Value {
     let farm_review = farm_review.into_inner();

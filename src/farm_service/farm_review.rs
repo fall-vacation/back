@@ -2,9 +2,8 @@ use rocket::serde::{Serialize, Deserialize};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 use sqlx::types::chrono::NaiveTime;
-use crate::repository::query_to_string::ToQuery;
+use crate::repository::query_to_string::{naive_time_to_string, string_to_naive_time, ToQuery};
 use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
-use crate::utils::{naive_time_to_string, string_to_naive_time};
 
 #[derive(Debug)]
 pub struct Dao{

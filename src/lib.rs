@@ -5,4 +5,3 @@ pub mod repository;
 pub mod farm_service;
 
 pub mod enums;
-pub mod utils;

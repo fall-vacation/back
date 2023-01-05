@@ -12,7 +12,7 @@ use rocket::serde::json::serde_json::json;
 use rocket_db_pools::Connection;
 use sqlx::Row;
 
-use crate::repository::FvDb;
+use crate::repository::{FallVacationDB, FvDb};
 use crate::farm_service::farm::{Dto, Dao};
 use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 
@@ -27,6 +27,9 @@ pub fn stage() -> AdHoc {
                        get_farm_list,
                        review_signup,
                        get_farm_review,
+
+                       get_farm_ver2,
+                       get_list_farm_ver2,
                    ])
     })
 }
@@ -65,6 +68,37 @@ pub async fn signup(mut db: Connection<FvDb>, farm: Json<Dto>) -> Value {
                     "error_message": error.to_string(),
                 })
             },
+    }
+}
+
+#[get("/ver2/<id>")]
+pub async fn get_farm_ver2(mut db: Connection<FvDb>, id:i32) -> Json<Dto>{
+    match db.fetch_one(Dao::select_from_id_query(id))
+        .await {
+        Ok(result) => {
+            let dto = Dao::match_pg_row(&result).to_dto();
+            Json(dto)
+        },
+        Err(error) => {
+            println!("error : {}", error.to_string());
+            Json(Dto::new())
+        }
+    }
+}
+
+#[get("/ver2/list?<param..>")]
+pub async fn get_list_farm_ver2(mut db: Connection<FvDb>, param: request_form::ListForm) -> Json<Vec<Dto>> {
+    match db.fetch_all(param.get_list_query())
+        .await {
+        Ok(result) => {
+            let data = Dao::to_vec_dto(result);
+            Json(data)
+        },
+        Err(error) => {
+            println!("error : {}", error.to_string());
+            let data = Vec::new();
+            Json(data)
+        },
     }
 }
 
@@ -121,7 +155,8 @@ pub async fn get_farm_list(mut db: Connection<FvDb>, param: request_form::ListFo
         Err(error) => {
             println!("error : {}", error.to_string());
             let data = Vec::new();
-            Json(data)}
+            Json(data)
+        }
     }
 }
 

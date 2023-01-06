@@ -5,7 +5,6 @@ mod farm_urls;
 mod farm_review;
 mod request_form;
 
-use std::collections::HashMap;
 use itertools::Itertools;
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
@@ -138,31 +137,17 @@ pub async fn get_farm_list(mut db: Connection<FvDb>, param: request_form::ListFo
 }
 
 fn merge_farm_data(farm: Vec<Dto>, farm_urls: Vec<farm_urls::Dto>, farm_review: Vec<farm_review::Dto>) -> Vec<Dto> {
-    let mut farm_hash = farm
-        .into_iter()
-        .map(|dto| (dto.get_farm_id(), dto))
-        .collect::<HashMap<i32, Dto>>();
+    let mut urls = farm_urls.into_iter()
+        .into_group_map_by(|url| url.get_farm_id());
+    let mut reviews = farm_review.into_iter()
+        .into_group_map_by(|review| review.get_farm_id());
 
-    // let farm_url_hash = farm_urls.into_iter()
-    //     .into_group_map_by(|url| url.get_farm_id());
-    //
-    // for (farm_id,farm) in farm_hash {
-    //     let url = farm_url_hash.get(&farm_id);
-    //     if url.is_some() {
-    //         url.unwrap()
-    //     }
-    // }
-
-    // for review in farm_review {
-    //     match farm_hash.get_mut(&review.get_farm_id()) {
-    //         Some(mut farm) => {
-    //             farm.add_farm_review(review);
-    //         },
-    //         None => {},
-    //     }
-    // }
-
-    farm_hash.into_iter().map(|(_key, value)| value).collect_vec()
+    farm.into_iter().map( |mut each_farm| {
+        let farm_id = each_farm.get_farm_id();
+        each_farm.set_farm_urls(urls.remove(&farm_id));
+        each_farm.set_farm_reviews(reviews.remove(&farm_id));
+        each_farm
+    }).collect()
 }
 
 // REVIEWS =========================================================================================

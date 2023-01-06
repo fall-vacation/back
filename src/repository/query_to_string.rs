@@ -41,6 +41,15 @@ impl ToQuery for Option<NaiveTime> {
     }
 }
 
+impl ToQuery for Option<NaiveDateTime> {
+    fn to_query_string(&self) -> String {
+        match self {
+            Some(naive) => naive.format("'%Y-%m-%d %H:%M:%S'").to_string(),
+            None => "NULL".to_string(),
+        }
+    }
+}
+
 impl ToQuery for Option<bool> {
     fn to_query_string(&self) -> String {
         match self {
@@ -57,6 +66,8 @@ impl ToQuery for Vec<i32> {
     }
 }
 
+// For NaiveTime or NaiveDateTime ============================================================
+// ===========================================================================================
 pub fn string_to_naive_time(opt_data:&Option<String>) -> Option<NaiveTime> {
     match opt_data {
         Some(data) => {
@@ -72,8 +83,6 @@ pub fn string_to_naive_time(opt_data:&Option<String>) -> Option<NaiveTime> {
     }
 }
 
-// For NaiveTime or NaiveDateTime ============================================================
-// ===========================================================================================
 pub fn naive_time_to_string(opt_naive:&Option<NaiveTime>) -> Option<String> {
     match opt_naive {
         Some(naive) => {

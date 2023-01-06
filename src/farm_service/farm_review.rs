@@ -1,8 +1,8 @@
 use rocket::serde::{Serialize, Deserialize};
 use sqlx::postgres::PgRow;
 use sqlx::Row;
-use sqlx::types::chrono::NaiveTime;
-use crate::repository::query_to_string::{naive_time_to_string, string_to_naive_time, ToQuery};
+use sqlx::types::chrono::NaiveDateTime;
+use crate::repository::query_to_string::{naive_date_time_to_string, string_to_naive_date_time, ToQuery};
 use crate::repository::trait_dao_dto::{DaoStruct, DtoStruct};
 
 #[derive(Debug)]
@@ -13,9 +13,9 @@ pub struct Dao{
     contents: Option<String>,
     hit: i32,
     stars: i32,
-    create_time: Option<NaiveTime>,
-    modify_time: Option<NaiveTime>,
-    delete_time: Option<NaiveTime>,
+    create_time: Option<NaiveDateTime>,
+    modify_time: Option<NaiveDateTime>,
+    delete_time: Option<NaiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,9 +43,9 @@ impl DaoStruct for Dao{
             contents : row.get::<Option<String>, _>("contents"),
             hit : row.get::<i32, _>("hit"),
             stars : row.get::<i32, _>("stars"),
-            create_time : row.get::<Option<NaiveTime>, _>("create_time"),
-            modify_time : row.get::<Option<NaiveTime>, _>("modify_time"),
-            delete_time : row.get::<Option<NaiveTime>, _>("delete_time"),
+            create_time : row.get::<Option<NaiveDateTime>, _>("create_time"),
+            modify_time : row.get::<Option<NaiveDateTime>, _>("modify_time"),
+            delete_time : row.get::<Option<NaiveDateTime>, _>("delete_time"),
         }
     }
 
@@ -57,9 +57,9 @@ impl DaoStruct for Dao{
             contents : self.contents,
             hit : Some(self.hit),
             stars : Some(self.stars),
-            create_time : naive_time_to_string(&self.create_time),
-            modify_time : naive_time_to_string(&self.modify_time),
-            delete_time : naive_time_to_string(&self.delete_time),
+            create_time : naive_date_time_to_string(&self.create_time),
+            modify_time : naive_date_time_to_string(&self.modify_time),
+            delete_time : naive_date_time_to_string(&self.delete_time),
         }
     }
 }
@@ -129,9 +129,9 @@ impl DtoStruct for Dto {
             contents : self.contents,
             hit : self.hit.unwrap_or(0),
             stars : self.stars.unwrap_or(0),
-            create_time : string_to_naive_time(&self.create_time),
-            modify_time : string_to_naive_time(&self.modify_time),
-            delete_time : string_to_naive_time(&self.delete_time),
+            create_time : string_to_naive_date_time(&self.create_time),
+            modify_time : string_to_naive_date_time(&self.modify_time),
+            delete_time : string_to_naive_date_time(&self.delete_time),
         }
     }
 

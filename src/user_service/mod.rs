@@ -7,8 +7,8 @@ use rocket::serde::json::serde_json::json;
 use rocket_db_pools::Connection;
 use sqlx::Row;
 
-use crate::repository::FvDb;
-pub mod fv_user;
+use crate::repository::{FallVacationDB, FvDb};
+mod fv_user;
 use fv_user::Dto;
 use crate::user_service::fv_user::Dao;
 
@@ -30,8 +30,7 @@ pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
     if user.check_validation(){
         let user = user.to_dao();
 
-        match sqlx::query(user.is_dup_email_query().as_str())
-            .fetch_one(&mut *db)
+        match db.query_one(user.is_dup_email_query())
             .await {
             Ok(result) => {
                 let count = result.get::<i64, _>("count");
@@ -50,9 +49,7 @@ pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
             }
         }
 
-        let query = user.insert_query();
-        return match sqlx::query(query.as_str())
-            .fetch_one(&mut *db)
+        return match db.query_one(user.insert_query())
             .await{
             Ok(result) => {
                 json!({
@@ -76,8 +73,7 @@ pub async fn signup(mut db: Connection<FvDb>, login: Json<Dto>) -> Value {
 
 #[get("/<id>")]
 pub async fn get_member_by_id(mut db: Connection<FvDb>, id: i32) -> Json<Dto> {
-    match sqlx::query( Dao::select_from_id_query(id).as_str() )
-        .fetch_one(&mut *db)
+    match db.query_one(Dao::select_from_id_query(id))
         .await {
         Ok(result) => {
             let dto = Dao::match_pg_row(result).to_dto();

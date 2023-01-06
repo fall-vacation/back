@@ -5,6 +5,8 @@ mod farm_urls;
 mod farm_review;
 mod request_form;
 
+use std::collections::HashMap;
+use itertools::Itertools;
 use rocket::fairing::AdHoc;
 use rocket::{get, post, routes};
 use rocket::serde::json::{Json, Value};
@@ -110,7 +112,21 @@ pub async fn get_farm_list(mut db: Connection<FvDb>, param: request_form::ListFo
     match db.query_all(param.get_farm_list_query())
         .await {
         Ok(result) => {
-            let data = Dao::to_vec_dto(result);
+            let dtos = Dao::to_vec_dto(result);
+            let ids: Vec<i32> = dtos.iter().map(|dto| dto.get_farm_id()).collect();
+
+            let data = merge_farm_data(
+                dtos,
+                farm_urls::Dao::to_vec_dto(
+                    db.query_all(farm_urls::Dao::urls_in_farm_id_query(&ids))
+                        .await.unwrap_or(Vec::new())
+                ),
+                farm_review::Dao::to_vec_dto(
+                    db.query_all(farm_review::Dao::reviews_in_farm_id_query(&ids))
+                        .await.unwrap_or(Vec::new())
+                )
+            );
+
             Json(data)
         },
         Err(error) => {
@@ -119,6 +135,34 @@ pub async fn get_farm_list(mut db: Connection<FvDb>, param: request_form::ListFo
             Json(data)
         },
     }
+}
+
+fn merge_farm_data(farm: Vec<Dto>, farm_urls: Vec<farm_urls::Dto>, farm_review: Vec<farm_review::Dto>) -> Vec<Dto> {
+    let mut farm_hash = farm
+        .into_iter()
+        .map(|dto| (dto.get_farm_id(), dto))
+        .collect::<HashMap<i32, Dto>>();
+
+    // let farm_url_hash = farm_urls.into_iter()
+    //     .into_group_map_by(|url| url.get_farm_id());
+    //
+    // for (farm_id,farm) in farm_hash {
+    //     let url = farm_url_hash.get(&farm_id);
+    //     if url.is_some() {
+    //         url.unwrap()
+    //     }
+    // }
+
+    // for review in farm_review {
+    //     match farm_hash.get_mut(&review.get_farm_id()) {
+    //         Some(mut farm) => {
+    //             farm.add_farm_review(review);
+    //         },
+    //         None => {},
+    //     }
+    // }
+
+    farm_hash.into_iter().map(|(_key, value)| value).collect_vec()
 }
 
 // REVIEWS =========================================================================================

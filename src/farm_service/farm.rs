@@ -84,12 +84,6 @@ impl DaoStruct for Dao {
 }
 
 impl Dao {
-    // pub fn to_dto_with_urls(self, farm_urls: Vec<farm_urls::Dto>) -> Dto {
-    //     let mut dto = self.to_dto();
-    //     dto.set_farm_urls(farm_urls);
-    //     dto
-    // }
-
     pub fn to_dto_with_urls_reviews(
         self,
         farm_urls: Option<Vec<farm_urls::Dto>>,
@@ -197,6 +191,10 @@ impl DtoStruct for Dto {
 }
 
 impl Dto {
+    pub fn get_farm_id(&self) -> i32{
+        self.farm_id.unwrap_or(0)
+    }
+
     pub fn get_dao_and_urls(mut self) -> (Dao, Option<Vec<farm_urls::Dto>>) {
         let farm_urls = self.farm_urls;
         self.farm_urls = None;
@@ -204,31 +202,15 @@ impl Dto {
         return (dao, farm_urls)
     }
 
+    // farm_urls functions
     pub fn set_farm_urls(&mut self, farm_urls: Option<Vec<farm_urls::Dto>>) -> &mut Dto {
         self.farm_urls = farm_urls;
         self
     }
 
+    // farm_revies functions
     pub fn set_farm_reviews(&mut self, farm_review: Option<Vec<farm_review::Dto>>) -> &mut Dto {
         self.farm_reviews = farm_review;
         self
     }
-
-    pub fn get_id(&self) -> Option<i32>{
-        self.farm_id
-    }
-
-    // pub async fn set_urls_review(db: &mut Query<'_, FvDb, None>, dtos: &mut Vec<Dto>) {
-    //     let mut ids = Vec::new();
-    //     for each in dtos {
-    //         ids.push(each.get_id().unwrap_or(0));
-    //     }
-    //
-    //     match sqlx::query(farm_urls::Dao::urls_in_farm_id_query(&ids).as_str())
-    //         .fetch_all(&*db)
-    //         .await {
-    //         Ok(_result) => {},
-    //         Err(_error) => {}
-    //     }
-    // }
 }

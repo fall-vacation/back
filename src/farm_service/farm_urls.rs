@@ -101,4 +101,8 @@ impl Dto {
     pub fn set_farm_id(&mut self, farm_id: i32) {
         self.farm_id = Some(farm_id);
     }
+
+    pub fn get_farm_id(&self) -> i32 {
+        self.farm_id.unwrap_or(0)
+    }
 }

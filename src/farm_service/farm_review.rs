@@ -80,6 +80,21 @@ impl Dao {
         WHERE farm_id = {}", farm_id)
     }
 
+    pub fn reviews_in_farm_id_query(farm_ids: &Vec<i32>) -> String {
+        format!("SELECT \
+            review_id,
+            farm_id,
+            user_id,
+            contents,
+            hit,
+            stars,
+            create_time,
+            modify_time,
+            delete_time
+        FROM FARM_REVIEW \
+        WHERE farm_id IN ({})", farm_ids.to_query_string())
+    }
+
     pub fn insert_query(&self) -> String {
         format!("INSERT INTO FARM_REVIEW(\
             farm_id, \
@@ -132,5 +147,11 @@ impl DtoStruct for Dto {
             modify_time : None,
             delete_time : None,
         }
+    }
+}
+
+impl Dto {
+    pub fn get_farm_id(&self) -> i32 {
+        self.farm_id.unwrap_or(0)
     }
 }
